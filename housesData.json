@@ -1,0 +1,12 @@
+{
+  "houses": [
+    {
+      "address": "Sintra (Santa Maria E São Miguel)",
+      "price": 780,
+      "living_area": 680,
+      "land_area": 1,
+      "rooms": 4,
+      "bedrooms": null
+    }
+  ]
+}
