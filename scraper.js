@@ -5,23 +5,21 @@ const rp = require('request-promise');
 var fs = require('fs');
 
 const root_url = 'https://www.green-acres.pt/';
-const searchPage_url = 'https://www.green-acres.pt/property-for-sale/sintra?p_n=';
-const house_url = 'https://www.green-acres.pt/en/properties/53674a-124.htm';
+const searchPage_url = 'https://www.green-acres.pt/casa-em-venda/sintra?p_n=';
 
 
-const caracteristicsLables = ['Habitable area', 'Land', 'Bedrooms', 'Rooms'];
-const caracteristicsKeyNames = ['living_area', 'land_area', 'bedrooms', 'rooms'];
+const geocodeUrl = 'http://www.mapquestapi.com/geocoding/v1/address?key=LmjL8NfyH3bKlGA6nMAZgLMCsisHkihH&location=Sintra (Santa Maria E São Miguel)';
 
-function writeToJson(house){
+const caracteristicsLables = ['Superfície habitável', 'Terreno', 'Divisões'];
+const caracteristicsKeyNames = ['living_area', 'land_area', 'rooms'];
+
+function writeToJson(houses){
     fs.readFile('housesData.json', 'utf8', function readFileCallback(err, data){
         if (err){
             console.log(err);
         } else {
         let obj = JSON.parse(data);
-        console.log(obj);
-        console.log(house);
-        obj.houses.push(house);
-        console.log(obj);
+        obj.houses = obj.houses.concat(houses);
         fs.writeFile('housesData.json', JSON.stringify(obj, null, 2) , 'utf8', (err) => {
             if(err)
                 console.log(err);
@@ -35,18 +33,50 @@ function normaliceNumber(stringWithNumber){
     const fixedNumber = parseInt(number.join(''));
     return fixedNumber;
 }
-function NormaliceHouseInfo(houseInfo, price){
+
+async function NormaliceHouseInfo($, link){
     let houseDetails = {
         address: null,
         price: null,
         living_area: null,
         land_area: null,
         rooms: null,
-        bedrooms: null
-    }
+    };
+    const title = $('h1.item-title', '#mainInfoAdvertPage').text().trim();
+    const price = $('span.price', '.title-standard');
+    const houseInfo = $('li','#mainInfoAdvertPage');
+    const description = $('p', '#DescriptionDiv').text().trim();
 
-    houseDetails.price = parseInt(normaliceNumber(price.text()));
-    houseDetails.address = houseInfo.find('.item-location p').text();
+    let newH = {
+        link: "",
+        location: {
+          country: "Portugal",
+          city: "Lisbon",
+          address: "",
+          coordinates: {
+            lat: "",
+            lng: ""
+          }
+        },
+        size: {
+          parcel_m2: "",
+          gross_m2: "",
+          net_m2: "",
+          rooms: ""
+        },
+        price: {
+          value: "",
+          currency: "EUR"
+        },
+        description: "",
+        title: "",
+        images: [""]
+      };
+
+    newH.price = parseInt(normaliceNumber(price.text()));
+    newH.location.address = houseInfo.find('.item-location p').text();
+    newH.description = description;
+    newH.title = title;
 
     const sz = houseInfo.length;
     for(let i = 0; i < sz; ++i){
@@ -59,37 +89,46 @@ function NormaliceHouseInfo(houseInfo, price){
         });
     }
 
+    newH.link = link;
+    newH.size.parcel_m2 = houseDetails.land_area;
+    newH.size.gross_m2 = houseDetails.living_area;
+    newH.size.rooms = houseDetails.rooms;
+
+    //HERE IS THE PROBLEM
+    // console.log($('img', '.item-photo-prev').eq(1).attr('src'));
+    
+    const geoQuery = geolocatio_url + newH.location.address + '?json=1';
+    let jsonLocation = JSON.parse(await rp(geoQuery));
+
+    newH.location.coordinates.lat = parseFloat(jsonLocation.latt);
+    newH.location.coordinates.lng = parseFloat(jsonLocation.longt);
+
     return new Promise(resolve => {
-        resolve(houseDetails);   
+        resolve(newH);   
     });
 }
 
-function extractHouseInfo(url, callback){
+function extractHouseInfo(url){
     const option = {
         'uri': url, 
         'headers': {
           'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36',
         }
     };
-    rp(option)
-    .then((htmlContent) => {
-        const $ = cheerio.load(htmlContent);
-        let price = $('span.price', '.title-standard');
-        let houseInfo = $('li','#mainInfoAdvertPage');
-        const HouseInfoNormaliced = NormaliceHouseInfo(houseInfo, price);
-        const housePromise = new Promise(resolve => {
-            resolve(HouseInfoNormaliced);
+    return rp(option)
+        .then((htmlContent) => {
+            const $ = cheerio.load(htmlContent);
+            
+            const HouseInfoNormaliced = NormaliceHouseInfo($, url);
+            return HouseInfoNormaliced;
+        })
+        .catch((err) => {
+            console.log(err.error);
+            return null;
         });
-        callback(housePromise);
-    })
-    .catch((err) => {
-        console.log(err.error);
-        callback(null);
-    });
 }
 
 
-let houses = [];
 function proccessSearchPage(url){
     const option = {
         'uri': url, 
@@ -97,41 +136,46 @@ function proccessSearchPage(url){
           'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36',
         }
       }
-    rp(option)
-    .then((htmlContent) => {
-        const $ = cheerio.load(htmlContent);
-        let housesList = $('a', 'figure.item-main');
-        for(let i = 0; i < housesList.length; ++i){
-            const houseLink = root_url + housesList.eq(i).attr('href');
+    return rp(option)
+        .then(async (htmlContent) => {
+            const $ = cheerio.load(htmlContent);
+            let housesList = $('a', 'figure.item-main');
+            let houses = [];
+            for(let i = 0; i < housesList.length; ++i){
+                const houseLink = root_url + housesList.eq(i).attr('href');
+                let houseData = await extractHouseInfo(houseLink);
+                houses.push(houseData);
+                await sleep(1000);
+            }
+            return houses;
+        })
+        .catch((err) => {
+            console.log(err.error);
             
-            extractHouseInfo(houseLink, (housePromise) =>{
-                housePromise.then((house) => {
-                    // writeToJson(house)
-                    // console.log(house);
-                    houses.push(house);
-                    console.log(houses);
-                });
-            });
-        }
-    })
-    .catch((err) => {
-        console.log(err.error);
-    });
+            return null;
+        });
 }
 
-proccessSearchPage(searchPage_url);
-
-function getSearchPage(searchUrl){
-    setTimeout(() => {
-        proccessSearchPage(searchUrl);
-    }, 10000);
-}
-
-async function start(){
-    for(let i = 1; i <= 10; ++i){
-        const searchUrl = searchPage_url + i;
-        getSearchPage(searchUrl);
+async function loopSite(){
+    let total = [];
+    for(let i = 10; i <= 10; ++i){
+        await proccessSearchPage(searchPage_url + i)
+        .then((houses) => {
+            total = total.concat(houses);
+        });
     }
+
+    return Promise.all(total);
 }
 
-start();
+function sleep(duration){
+    console.log('sleeping for', duration)
+    return new Promise((res) => {
+        setTimeout(() => res(), duration);
+    })
+}
+
+loopSite()
+.then((houses) => {
+    writeToJson(houses);
+})
