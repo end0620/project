@@ -94,14 +94,14 @@ async function NormaliceHouseInfo($, link){
     newH.size.gross_m2 = houseDetails.living_area;
     newH.size.rooms = houseDetails.rooms;
 
-    //HERE IS THE PROBLEM
+    // HERE IS THE PROBLEM
     // console.log($('img', '.item-photo-prev').eq(1).attr('src'));
-    
+
     const geoQuery = geolocatio_url + newH.location.address + '?json=1';
     let jsonLocation = JSON.parse(await rp(geoQuery));
 
-    newH.location.coordinates.lat = parseFloat(jsonLocation.latt);
-    newH.location.coordinates.lng = parseFloat(jsonLocation.longt);
+    newH.location.coordinates.lat = parseFloat($('#locationMapDialog').data('lat'));
+    newH.location.coordinates.lng = parseFloat($('#locationMapDialog').data('lng'));
 
     return new Promise(resolve => {
         resolve(newH);   
@@ -144,7 +144,8 @@ function proccessSearchPage(url){
             for(let i = 0; i < housesList.length; ++i){
                 const houseLink = root_url + housesList.eq(i).attr('href');
                 let houseData = await extractHouseInfo(houseLink);
-                houses.push(houseData);
+                // houses.push(houseData);
+                break;
                 await sleep(1000);
             }
             return houses;
@@ -161,7 +162,7 @@ async function loopSite(){
     for(let i = 10; i <= 10; ++i){
         await proccessSearchPage(searchPage_url + i)
         .then((houses) => {
-            total = total.concat(houses);
+            // total = total.concat(houses);
         });
     }
 
@@ -177,5 +178,5 @@ function sleep(duration){
 
 loopSite()
 .then((houses) => {
-    writeToJson(houses);
+    // writeToJson(houses);
 })
