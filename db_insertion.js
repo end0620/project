@@ -19,15 +19,10 @@ const column_names = ['url',
 'title',
 'images'];
 
-
-
 houseData.forEach(x => delete x.url);
-// console.log(JSON.stringify(houseData[0], null, 2));
 
 function spreadObjectValues(obj){
     let propValues = [];
-    // console.log("===========================================");
-    // console.log(JSON.stringify(obj, null, 2));
     for (let prop in obj){
         if(typeof obj[prop] === 'object' && obj[prop] !== null)
             propValues = propValues.concat(spreadObjectValues(obj[prop]));
@@ -51,6 +46,5 @@ db.query("INSERT INTO portugal_houses VALUES ?" , [houseData], function(err, res
         console.log(err);
     else
         console.log('insert successfully')
-        // console.log(JSON.stringify(err, null, 2));
 });
 db.end();
