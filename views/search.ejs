@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+</head>
+<body>
+    <div id=searchResult>
+            
+
+        <h1 class="text-center">Result for <%= city %></h1>
+        <div id="chartContainer" style="height: 300px; width: 80%; margin: 0 auto;"></div>
+        <div class="table-responsive container">
+                <table class="table">
+                    <tr>
+                        <th>City</th>
+                        <th>Total Houses</th>
+                        <th>Total Price</th>
+                        <th>AVG price</th>
+                    </tr>
+                    <% for(var i = 0; i < chartResult.length; i++) { %>
+                        <tr>
+                        <td><%= chartResult[i].location_city %></td>
+                        <td><%= chartResult[i].total_houses %></td>
+                        <td><%= chartResult[i].total_price %></td>
+                        <td><%= chartResult[i].avg_price %></td>
+                        </tr>
+                    <% } %>
+                </table>
+        </div>
+        <div class="table-responsive container">
+            <table class="table">
+                <tr>
+                    <th>location_city</th>
+                    <th>location_address</th>
+                    <th>price_value</th>
+                    <th>price_currency</th>
+                    <th>market_date</th>
+                </tr>
+                <% for(var i = 0; i < result.length; i++) { %>
+                    <tr>
+                    <td><%= result[i].location_city %></td>
+                    <td><%= result[i].location_address %></td>
+                    <td><%= result[i].price_value %></td>
+                    <td><%= result[i].price_currency %></td>
+                    <td><%= result[i].market_date %></td>
+                    </tr>
+                <% } %>
+            </table>
+        </div>
+        <p><%= result[0].location_city %></p>
+    </div>
+    <script type="text/javascript" charset="utf-8">
+        
+        window.onload = function () {
+            var chart = new CanvasJS.Chart("chartContainer",
+            {
+              title:{
+                text: "House prices chart"
+            },
+            axisX:{
+                title: "Date",
+                gridThickness: 2
+            },
+            axisY: {
+                title: "Price"
+            },
+            data: [
+            {        
+                type: "line",
+                dataPoints: [
+                <% for(var i = 0; i < chartData.length; i++) { %>
+                   { x: new Date(<%= chartData[i].x%>), y: <%= chartData[i].y%>},
+                <% } %>
+                ]
+            }
+            ]
+        });
+            chart.render();
+        }
+        </script>
+        <script type="text/javascript" src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</body>
+</html>
