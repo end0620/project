@@ -6,10 +6,15 @@ const bodyParser = require('body-parser');
 const db = require('./db_config.js');
 const Chart = require('chart.js');;
 const app = express();
+const validate = require('./validate.js');
 
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.json());
+
+app.get("/submitData", (request, response) => {
+    response.render('submit');   
+});
 
 app.get("/searchData",(request, response) => {
 

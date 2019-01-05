@@ -17,6 +17,7 @@
     "nodemon": "^1.18.9",
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
-    "request-promises": "^1.1.0"
+    "request-promises": "^1.1.0",
+    "validator": "^10.10.0"
   }
 }
