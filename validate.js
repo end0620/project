@@ -21,7 +21,14 @@ function isValidDate(s){
     return isNumeric(d.getTime());
 }
 function checkProps(obj, props) {
-   return props.every((el) => obj.hasOwnProperty(el));
+   return props.every((el) => {
+       if(obj.hasOwnProperty(el)){
+           return true;
+       }
+       console.log(el);
+       return false;
+    }
+       );
 }
 
 function validateProps(obj) {
@@ -91,5 +98,34 @@ function validateHouseObj(obj){
     }
     return result;
 }
+
+let hs = {
+    "link": "https://www.green-acres.pt/pt/properties/53674a-1633.htm",
+    "location": {
+      "country": "Portugal",
+      "city": "Lisbon",
+      "address": "Sintra (Santa Maria E São Miguel)",
+      "coordinates": {
+        "lat": 12.129605972527465,
+        "lng": 1.6009895408505912
+      }
+    },
+    "size": {
+      "parcel_m2": 379,
+      "gross_m2": 286,
+      "net_m2": "",
+      "rooms": 4
+    },
+    "price": {
+      "value": 685000,
+      "currency": "EUR"
+    },
+    "description": "Boa oportunidade para investimento e/ou A.L. No coração de Sintra, entre a privacidade da natureza e o centro da cidade - Praça de S. Pedro e estação Cp - arquitectura original Raul Lino, com projecto de remodelação/ampliação aprovado pela Câmara Municipal de Sintra. : Douglas Elliman Portugal",
+    "title": "Moradia Isolada T4 Venda em Sintra (Santa Maria e São Miguel, São Martinho e São Pedro de Penaferrim",
+    "images": [
+      ""
+    ],
+    "sold": false
+  };
 
 module.exports = validateHouseObj;

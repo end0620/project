@@ -7,13 +7,55 @@ const db = require('./db_config.js');
 const Chart = require('chart.js');;
 const app = express();
 const validate = require('./validate.js');
+const writeToDB = require('./db_insertion.js');
+const busboy = require('connect-busboy');
+var fs = require('fs-extra');  
 
 app.set('view engine', 'ejs');
+app.use(busboy());
 
 app.use(bodyParser.json());
 
 app.get("/submitData", (request, response) => {
     response.render('submit');   
+});
+
+app.post("/upload", (request, response) => {
+
+    request.pipe(request.busboy);
+
+    request.busboy.on('file', function (fieldname, file, filename) {
+        console.log("Uploading: " + filename);
+
+        console.log(__dirname);
+        let fstream = fs.createWriteStream(__dirname +'/uploads/' + filename);
+        file.pipe(fstream);
+        fstream.on('close', function () {    
+            console.log("Upload Finished of " + filename); 
+            
+            fs.readFile(__dirname +'/uploads/' + filename, 'utf8', function readFileCallback(err, data){
+                if (err){
+                    console.log(err);
+                } else {
+                    let obj = JSON.parse(data);
+                    
+                    console.log(obj);
+                    let correctData = [];
+                    obj.houses.forEach((elm) => {
+                        const result = validate(elm);
+                        if(!result.err)
+                            correctData.push(elm);
+                        else
+                            console.log(result.err);
+                    });
+
+                    writeToDB(correctData);
+                   
+                   
+            }});
+            response.redirect('back');
+        });
+    });
 });
 
 app.get("/searchData",(request, response) => {

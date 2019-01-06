@@ -1,8 +1,8 @@
 "use strict";
 
-let houseData = require('./housesData.json');
 const db = require('./db_config.js');
 const fs = require('fs');
+const dataH = require('./housesData.json');
 
 const column_names = ['url',
 'location_country',
@@ -20,7 +20,7 @@ const column_names = ['url',
 'title',
 'images'];
 
-houseData.forEach(x => delete x.url);
+dataH.forEach((elm) => delete elm.url);
 
 function spreadObjectValues(obj){
     let propValues = [];
@@ -33,30 +33,26 @@ function spreadObjectValues(obj){
             else if (prop === 'images')
                 propValues.push("no images");
             else
-                propValues.push(prop == 'lat' || prop == 'lng' ? 1 : obj[prop]);
+                propValues.push(obj[prop]);
         }
     }
 
     return propValues;
 }
 
-writeToJson(houseData);
-houseData = houseData.map(spreadObjectValues);
 
-// console.log(JSON.stringify(houseData[0], null, 2));
-// db.query("INSERT INTO portugal_houses VALUES ?" , [houseData], function(err, result, field){
-//     if(err)
-//         console.log(err);
-//     else
-//         console.log('insert successfully')
-// });
+function writeToDatabase(houseArray){
 
-// db.query("SELECT * FROM portugal_houses", function(err, result){
-
-//     writeToJson(result);
-    // console.log(JSON.stringify(result, null, 2));
-// });
-
+    const houseData = houseArray.map(spreadObjectValues);
+    
+    db.query("REPLACE INTO portugal_houses VALUES ?" , [houseData], function(err, result, field){
+    if(err)
+        console.log(err);
+    else
+        console.log('insert successfully')
+    });
+    db.end();
+}
 function writeToJson(houses){
     fs.readFile('new.json', 'utf8', function readFileCallback(err, data){
         if (err){
@@ -65,9 +61,9 @@ function writeToJson(houses){
 
         let obj = JSON.parse(data);
         houses.forEach((elm) => {
-            elm.location.lng = Math.random() * 60 - 30;
-            elm.location.lat = Math.random() * 60 - 30;
-            elm.market_date = randomDate(new Date(2018, 0, 1), new Date());
+            elm.location.coordinates.lng = Math.random() * 60 - 30;
+            elm.location.coordinates.lat = Math.random() * 60 - 30;
+            elm.market_date = randomDate(new Date(2018, 0, 1), new Date()).toISOString().slice(0, 10);
             elm.sold = false;
         })
 
@@ -85,4 +81,4 @@ function randomDate(start, end) {
     return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 }
 
-db.end();
+module.exports = writeToDatabase;
