@@ -43,7 +43,7 @@ function validateHouseObj(obj){
     };
 
     if(!validateProps(obj)) {
-        result.err = ["Invalid object. Property missing!"];
+        result.err = "Invalid object. Property missing!";
         return result;
     }
     if(!isString(obj.location.city)) {
