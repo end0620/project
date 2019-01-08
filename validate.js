@@ -1,6 +1,6 @@
 const validator = require('validator');
 
-const mainProps = ['link', 'location', 'market_date', 'price', 'size', 'sold'];
+const mainProps = ['link', 'location','size' , 'price', , 'market_date',  'sold'];
 
 const locationProps = ['address', 'city', 'coordinates', 'country'];
 const coordinatesProps = ['lat', 'lng'];
